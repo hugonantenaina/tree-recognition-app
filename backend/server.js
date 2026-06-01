@@ -6,7 +6,7 @@ const classifyRouter = require('./routes/classify');
 
 require('dotenv').config();
 
-// ===== CRASH HANDLERS (fiarovana ny process tsy ho maty tampoka) =====
+// ===== CRASH HANDLERS =====
 process.on('uncaughtException', (err) => {
   console.error('❌ UNCAUGHT EXCEPTION:', err);
 });
@@ -17,7 +17,26 @@ process.on('unhandledRejection', (err) => {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: 'http://localhost:3000' }));
+// ===== CORS (localhost + URL en ligne) =====
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL, // URL Vercel (hampidirina ao Render)
+];
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // Avela ny request tsy misy origin (ohatra Postman, na server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        cb(null, true);
+      } else {
+        console.warn('CORS bloqué pour origin :', origin);
+        cb(new Error('Not allowed by CORS'));
+      }
+    },
+  })
+);
+
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -46,7 +65,7 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 },
 });
 
-// Wrapper mba hisamborana ny erreur-n'ny multer (tsy hampaty ny process)
+// Wrapper mba hisamborana ny erreur-n'ny multer
 const uploadMiddleware = (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err) {
