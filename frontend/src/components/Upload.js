@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react';
+const API_URL = 'https://arbrescan-api.onrender.com';
+// URL backend : en ligne (Render) raha misy, sinon localhost via proxy
 
+console.log('API_URL =', API_URL);  // ⬅️ diagnostic
 const Upload = ({ setResult, setLoading, setError }) => {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
@@ -16,7 +19,7 @@ const Upload = ({ setResult, setLoading, setError }) => {
     formData.append('image', file);
     setLoading(true);
     try {
-      const response = await fetch('/api/classify', {
+      const response = await fetch(`${API_URL}/api/classify`, {
         method: 'POST',
         body: formData,
       });
@@ -64,12 +67,12 @@ const Upload = ({ setResult, setLoading, setError }) => {
         onClick={() => fileInputRef.current?.click()}
       >
         <p>Glisse-dépose une image ici ou clique pour sélectionner.</p>
-        <small>JPG, PNG uniquement</small>
+        <small>JPG, PNG, WEBP</small>
       </div>
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png"
+        accept="image/jpeg,image/png,image/webp"
         hidden
         onChange={handleFileSelect}
       />

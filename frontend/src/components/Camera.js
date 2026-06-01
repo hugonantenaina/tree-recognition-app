@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+const API_URL = 'https://arbrescan-api.onrender.com';
 
 const Camera = ({ setResult, setLoading, setError }) => {
   const videoRef = useRef(null);
@@ -55,10 +56,10 @@ const Camera = ({ setResult, setLoading, setError }) => {
         return;
       }
       const formData = new FormData();
-      formData.append('image', blob, 'capture.png');
+      formData.append('image', blob, 'capture.jpg');
       setLoading(true);
       try {
-        const response = await fetch('/api/classify', {
+        const response = await fetch(`${API_URL}/api/classify`, {
           method: 'POST',
           body: formData,
         });
@@ -73,7 +74,7 @@ const Camera = ({ setResult, setLoading, setError }) => {
       } finally {
         setLoading(false);
       }
-    }, 'image/png');
+    }, 'image/jpeg', 0.92);
   };
 
   return (

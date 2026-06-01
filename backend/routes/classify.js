@@ -1,23 +1,9 @@
-const fs = require('fs');
 const axios = require('axios');
 const FormData = require('form-data');
 const sharp = require('sharp');
 const treeDatabase = require('../models/tree_model');
 
 const PLANTNET_ENDPOINT = 'https://my-api.plantnet.org/v2/identify/k-world-flora';
-
-// Famafana rakitra azo antoka (tsy mampmaty ny process raha tsy mety)
-const safeDelete = (filePath) => {
-  if (!filePath) return;
-  // Andraso kely mba ho afaka tanteraka ny rakitra (Windows)
-  setTimeout(() => {
-    fs.unlink(filePath, (err) => {
-      if (err && err.code !== 'ENOENT') {
-        console.warn('Avertissement suppression fichier :', err.message);
-      }
-    });
-  }, 500);
-};
 
 const getMatches = (rawResults) => {
   if (!Array.isArray(rawResults)) return [];
@@ -41,20 +27,16 @@ const classify = async (req, res, next) => {
     return res.status(400).json({ success: false, message: 'Aucune image reçue.' });
   }
 
-  const filePath = req.file.path;
   const apiKey = process.env.PLANTNET_API_KEY;
 
   if (!apiKey) {
-    safeDelete(filePath);
     return res.status(500).json({ success: false, message: 'Clé API PlantNet non configurée.' });
   }
 
   try {
-    // Mamaky ny rakitra ho buffer ALOHA (mba tsy hisy lock amin'ny rakitra)
-    const inputBuffer = await fs.promises.readFile(filePath);
-
-    // Manova ho JPEG madio amin'ny buffer (tsy mikitika ny rakitra intsony)
-    const convertedBuffer = await sharp(inputBuffer)
+    // Ny sary dia ao amin'ny buffer (memoryStorage)
+    // Manova ho JPEG madio (mandray jpg, png, webp rehetra)
+    const convertedBuffer = await sharp(req.file.buffer)
       .rotate()
       .jpeg({ quality: 90 })
       .toBuffer();
@@ -111,13 +93,9 @@ const classify = async (req, res, next) => {
       userMessage = 'Type de fichier non supporté. Utilisez une image JPG, PNG ou WEBP valide.';
     }
 
-    // Manamarina fa tsy efa lasa ny réponse vao mandefa
     if (!res.headersSent) {
       res.status(status).json({ success: false, message: userMessage });
     }
-  } finally {
-    // Famafana azo antoka (asynchrone, tsy mampaty ny process)
-    safeDelete(filePath);
   }
 };
 
