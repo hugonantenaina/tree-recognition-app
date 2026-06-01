@@ -43,6 +43,27 @@ app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'Le serveur est opérationnel.' });
 });
 
+// Proxy ho an'ny sary PlantNet (mba tsy hisy CONNECTION_TIMED_OUT eo amin'ny client)
+const axios = require('axios');
+app.get('/api/image-proxy', async (req, res) => {
+  const imageUrl = req.query.url;
+  if (!imageUrl || !imageUrl.startsWith('https://bs.plantnet.org/')) {
+    return res.status(400).send('URL invalide');
+  }
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 20000,
+    });
+    res.set('Content-Type', response.headers['content-type'] || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(response.data);
+  } catch (err) {
+    console.error('Image proxy error:', err.message);
+    res.status(502).send('Image indisponible');
+  }
+});
+
 const storage = multer.memoryStorage();
 
 const upload = multer({

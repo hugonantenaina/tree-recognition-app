@@ -256,7 +256,7 @@ function App() {
                       <div className="history-item" key={item.id}>
                         <button className="history-item__main" onClick={() => openFromHistory(item)}>
                           {item.image ? (
-                            <img className="history-item__img" src={item.image} alt={item.scientificName} loading="lazy" />
+                            <img className="history-item__img" src={`https://arbrescan-api.onrender.com/api/image-proxy?url=${encodeURIComponent(item.image)}`} alt={item.scientificName} loading="lazy" />
                           ) : (
                             <span className="history-item__img history-item__img--placeholder">🌿</span>
                           )}

@@ -1,6 +1,9 @@
 const ResultDisplay = ({ result }) => {
   if (!result) return null;
 
+  const API_URL = 'https://arbrescan-api.onrender.com';
+  const proxify = (url) => `${API_URL}/api/image-proxy?url=${encodeURIComponent(url)}`;
+
   const scorePercent = Math.round((result.score || 0) * 100);
   const topAlternatives = result.results?.slice(1, 4) || [];
   const characteristics = Object.entries(result.characteristics || {});
@@ -110,7 +113,7 @@ const ResultDisplay = ({ result }) => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <img src={image.url} alt={result.scientificName} loading="lazy" />
+                  <img src={proxify(image.url)} alt={result.scientificName} loading="lazy" />
                   <span className="image-card__credit">📷 {image.credit}</span>
                 </a>
               ))}
