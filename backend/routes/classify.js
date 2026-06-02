@@ -7,6 +7,9 @@ const PLANTNET_ENDPOINT = 'https://my-api.plantnet.org/v2/identify/k-world-flora
 const GEMINI_ENDPOINT =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
+// Cache: tsy antso indray Gemini raha efa fantatra ilay hazo
+const aiCache = new Map();
+
 const getMatches = (rawResults) => {
   if (!Array.isArray(rawResults)) return [];
   return rawResults.map((item) => {
@@ -24,47 +27,77 @@ const getMatches = (rawResults) => {
   });
 };
 
-// Génération texte avec Gemini (description, origine, utilisations, caractéristiques)
 const enrichWithAI = async (scientificName, commonNames) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
-  const prompt = `You are a botanist. For the plant/tree with scientific name "${scientificName}"${
-    commonNames?.length ? ` (also known as: ${commonNames.slice(0, 3).join(', ')})` : ''
-  }, provide accurate factual information.
-Respond ONLY with a valid JSON object (no markdown, no backticks) with these exact keys:
-{
-  "description": "2-3 sentence general description in French",
-  "origin": "native region/countries in French, short",
-  "uses": "main uses (medicinal, wood, food, ornamental...) in French, 2-3 sentences",
-  "characteristics": { "Hauteur": "...", "Feuilles": "...", "Floraison": "...", "Habitat": "..." },
-  "conservationStatus": "IUCN status if known (e.g. Préoccupation mineure, Vulnérable, En danger), else 'Non évalué'"
-}`;
-
-  try {
-    const response = await axios.post(
-      GEMINI_ENDPOINT,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 800 },
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        timeout: 20000,
-      }
-    );
-
-    let text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    // Manadio ny markdown raha misy
-    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-    return JSON.parse(text);
-  } catch (err) {
-    console.warn('Gemini enrichment failed:', err.message);
-    return null;
+  // Cache: averina mivantana raha efa ao
+  if (aiCache.has(scientificName)) {
+    console.log('AI cache hit:', scientificName);
+    return aiCache.get(scientificName);
   }
+
+  const prompt = `You are a botanist expert. For the tree/plant "${scientificName}"${
+    commonNames?.length ? ` (common names: ${commonNames.slice(0, 2).join(', ')})` : ''
+  }, respond ONLY with this JSON (no markdown, no backticks, no extra text before or after):
+{"description":"2 sentences in French about this plant","origin":"native countries/region in French","uses":"medicinal/wood/food/ornamental uses in French in 2 sentences","characteristics":{"Hauteur":"value","Feuilles":"value","Floraison":"value","Habitat":"value"},"conservationStatus":"IUCN status in French or Non evalué"}`;
+
+  // Andramo 3 fotoana miaraka amin'ny fotoam-piandrasana
+  const delays = [0, 5000, 10000];
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (delays[attempt] > 0) {
+      console.log(`Gemini retry ${attempt}, waiting ${delays[attempt]}ms...`);
+      await new Promise(r => setTimeout(r, delays[attempt]));
+    }
+
+    try {
+      const response = await axios.post(
+        GEMINI_ENDPOINT,
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1200,
+          },
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          timeout: 30000,
+        }
+      );
+
+      let text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      // Manadio: esory markdown raha misy
+      text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+      // Maka ny JSON eo anelanelan'ny { sy } voalohany sy farany
+      const start = text.indexOf('{');
+      const end = text.lastIndexOf('}');
+      if (start === -1 || end === -1) throw new Error('No JSON found');
+
+      const parsed = JSON.parse(text.substring(start, end + 1));
+
+      // Cache ny resultat
+      aiCache.set(scientificName, parsed);
+      console.log('AI enrichment success:', scientificName);
+      return parsed;
+
+    } catch (err) {
+      const status = err.response?.status;
+      console.warn(`Gemini attempt ${attempt + 1} failed (${status || err.message})`);
+
+      // Raha 400 (bad request) → tsy misy fotoana anelanelan'izany
+      if (status === 400) break;
+    }
+  }
+
+  console.warn('All Gemini attempts failed for:', scientificName);
+  return null;
 };
 
 const classify = async (req, res, next) => {
@@ -103,14 +136,14 @@ const classify = async (req, res, next) => {
 
     const rawResults = response.data?.results || [];
     if (!rawResults.length) {
-      throw new Error('Aucune correspondance trouvée par l’API Pl@ntNet.');
+      throw new Error('Aucune correspondance trouvée par l\'API Pl@ntNet.');
     }
 
     const matches = getMatches(rawResults);
     const topMatch = matches[0];
     const localData = treeDatabase[topMatch.scientificName] || {};
 
-    // Génération texte AI (raha tsy ao amin'ny database local)
+    // Génération texte AI
     const aiData = await enrichWithAI(topMatch.scientificName, topMatch.commonNames);
 
     const result = {
@@ -131,17 +164,15 @@ const classify = async (req, res, next) => {
 
     res.json(result);
   } catch (error) {
-    console.error('Erreur classification :', error.message || error);
+    console.error('Erreur classification:', error.message || error);
     if (error.response?.data) {
       console.error('Full error:', error.response.data);
     }
     const status = error.response?.status || 500;
-
-    let userMessage = error.message || 'Erreur lors de l’appel à l’API.';
+    let userMessage = error.message || 'Erreur lors de l\'appel à l\'API.';
     if (error.response?.data?.message?.includes('Unsupported file type')) {
-      userMessage = 'Type de fichier non supporté. Utilisez une image JPG, PNG ou WEBP valide.';
+      userMessage = 'Type de fichier non supporté. Utilisez une image JPG, PNG ou WEBP.';
     }
-
     if (!res.headersSent) {
       res.status(status).json({ success: false, message: userMessage });
     }
