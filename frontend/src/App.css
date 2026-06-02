@@ -778,3 +778,26 @@ img {
 @media (max-width: 380px) {
   .images-grid { grid-template-columns: 1fr; }
 }
+.result-hero__name-block {
+  display: grid;
+  gap: 2px;
+}
+
+.result-hero__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.ai-notice {
+  margin: 0;
+  padding: 12px 16px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: var(--radius-sm);
+  color: #0369a1;
+  font-size: 0.82rem;
+  text-align: center;
+}

@@ -8,14 +8,12 @@ const ResultDisplay = ({ result }) => {
   const topAlternatives = result.results?.slice(1, 4) || [];
   const characteristics = Object.entries(result.characteristics || {});
 
-  // Loko arakaraka ny confiance
   const getScoreColor = (percent) => {
-    if (percent >= 70) return { start: '#28a745', end: '#20c997', label: 'Élevée' };
-    if (percent >= 40) return { start: '#f0a500', end: '#f7c948', label: 'Moyenne' };
-    return { start: '#e85d4e', end: '#f08a5d', label: 'Faible' };
+    if (percent >= 70) return { start: '#16a34a', end: '#4ade80', label: 'élevée' };
+    if (percent >= 40) return { start: '#f0a500', end: '#f7c948', label: 'moyenne' };
+    return { start: '#e85d4e', end: '#f08a5d', label: 'faible' };
   };
 
-  // Loko arakaraka ny statut conservation
   const getStatusStyle = (status) => {
     const s = (status || '').toLowerCase();
     if (s.includes('danger') || s.includes('menac') || s.includes('critique')) return 'badge badge--danger';
@@ -29,10 +27,13 @@ const ResultDisplay = ({ result }) => {
 
   return (
     <div className="result-display">
-      {/* HERO : Anarana siantifika + anarana mahazatra */}
+      {/* HERO */}
       <div className="result-hero">
-        <span className="result-hero__tag">Espèce identifiée</span>
-        <h2 className="result-hero__title">{result.scientificName}</h2>
+        <span className="result-hero__tag">🌳 Arbre identifié</span>
+        <div className="result-hero__name-block">
+          <span className="result-hero__label">Nom scientifique</span>
+          <h2 className="result-hero__title">{result.scientificName}</h2>
+        </div>
         {result.commonNames?.length > 0 && (
           <div className="badge-row">
             {result.commonNames.slice(0, 4).map((name, i) => (
@@ -46,7 +47,7 @@ const ResultDisplay = ({ result }) => {
       <div className="stat-row">
         <div className="stat-card">
           <div className="stat-card__head">
-            <span className="stat-card__label">Confiance</span>
+            <span className="stat-card__label">Niveau de confiance</span>
             <span className="stat-card__value">{scorePercent}%</span>
           </div>
           <div className="score-bar">
@@ -58,7 +59,7 @@ const ResultDisplay = ({ result }) => {
               }}
             />
           </div>
-          <span className="stat-card__hint">Fiabilité {scoreColor.label.toLowerCase()}</span>
+          <span className="stat-card__hint">Fiabilité {scoreColor.label}</span>
         </div>
 
         <div className="stat-card">
@@ -71,13 +72,35 @@ const ResultDisplay = ({ result }) => {
         </div>
       </div>
 
-      {/* UTILISATION */}
+      {/* DESCRIPTION (AI) */}
+      {result.description && (
+        <div className="info-block">
+          <div className="info-block__icon">📋</div>
+          <div>
+            <h3 className="info-block__title">Description</h3>
+            <p className="info-block__text">{result.description}</p>
+          </div>
+        </div>
+      )}
+
+      {/* ORIGINE */}
+      {result.origin && (
+        <div className="info-block">
+          <div className="info-block__icon">🌍</div>
+          <div>
+            <h3 className="info-block__title">Origine</h3>
+            <p className="info-block__text">{result.origin}</p>
+          </div>
+        </div>
+      )}
+
+      {/* UTILISATIONS */}
       <div className="info-block">
         <div className="info-block__icon">🌿</div>
         <div>
-          <h3 className="info-block__title">Utilisation</h3>
+          <h3 className="info-block__title">Utilisations</h3>
           <p className="info-block__text">
-            {result.uses || 'Aucune donnée locale disponible.'}
+            {result.uses || 'Informations non disponibles.'}
           </p>
         </div>
       </div>
@@ -97,7 +120,7 @@ const ResultDisplay = ({ result }) => {
         </div>
       )}
 
-      {/* IMAGES DE RÉFÉRENCE */}
+      {/* IMAGES */}
       {hasValidImages && (
         <div className="result-section">
           <h3 className="section-title">Images de référence</h3>
@@ -106,13 +129,7 @@ const ResultDisplay = ({ result }) => {
               .filter((img) => img.url && img.url.startsWith('http'))
               .slice(0, 4)
               .map((image, index) => (
-                <a
-                  className="image-card"
-                  key={index}
-                  href={image.url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a className="image-card" key={index} href={image.url} target="_blank" rel="noreferrer">
                   <img src={proxify(image.url)} alt={result.scientificName} loading="lazy" />
                   <span className="image-card__credit">📷 {image.credit}</span>
                 </a>
@@ -153,29 +170,22 @@ const ResultDisplay = ({ result }) => {
       <div className="result-section">
         <h3 className="section-title">En savoir plus</h3>
         <div className="external-links">
-          <a
-            href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(result.scientificName)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(result.scientificName)}`} target="_blank" rel="noreferrer">
             🔍 Google Images
           </a>
-          <a
-            href={`https://fr.wikipedia.org/wiki/${encodeURIComponent(result.scientificName)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href={`https://fr.wikipedia.org/wiki/${encodeURIComponent(result.scientificName)}`} target="_blank" rel="noreferrer">
             📖 Wikipedia
           </a>
-          <a
-            href={`https://www.gbif.org/species/search?q=${encodeURIComponent(result.scientificName)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href={`https://www.gbif.org/species/search?q=${encodeURIComponent(result.scientificName)}`} target="_blank" rel="noreferrer">
             🌍 GBIF
           </a>
         </div>
       </div>
+
+      {/* MENTION IA */}
+      {result.aiGenerated && (
+        <p className="ai-notice">✨ Informations générées par IA — à vérifier pour un usage officiel.</p>
+      )}
     </div>
   );
 };
