@@ -873,3 +873,13 @@ a { color: inherit; }
 @media (max-width: 380px) {
   .images-grid { grid-template-columns: 1fr; }
 }
+/* Topbar responsive — tsy manakona ny brand */
+@media (max-width: 760px) {
+  .app-topbar__brand small { display: none; }
+  .topbar-btn { padding: 8px 12px; font-size: 0.78rem; }
+  .user-chip__name { display: none; }
+}
+
+@media (max-width: 480px) {
+  .topbar-btn { display: none; } /* Amin'ny finday kely, esorina ny topbar btn */
+}

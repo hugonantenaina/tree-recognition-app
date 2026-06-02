@@ -184,7 +184,7 @@ const ResultDisplay = ({ result }) => {
 
       {/* MENTION IA */}
       {result.aiGenerated && (
-        <p className="ai-notice">✨ Informations générées par IA — à vérifier pour un usage officiel.</p>
+        <p className="ai-notice">✨ Données enrichies automatiquement</p>
       )}
     </div>
   );
