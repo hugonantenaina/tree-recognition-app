@@ -5,7 +5,7 @@ const treeDatabase = require('../models/tree_model');
 
 const PLANTNET_ENDPOINT = 'https://my-api.plantnet.org/v2/identify/k-world-flora';
 const GEMINI_ENDPOINT =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 const getMatches = (rawResults) => {
   if (!Array.isArray(rawResults)) return [];
