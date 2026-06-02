@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react';
-const API_URL = 'https://arbrescan-api.onrender.com';
-// URL backend : en ligne (Render) raha misy, sinon localhost via proxy
 
-console.log('API_URL =', API_URL);  // ⬅️ diagnostic
+const API_URL = process.env.REACT_APP_API_URL || '';
+
 const Upload = ({ setResult, setLoading, setError }) => {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
@@ -66,8 +65,9 @@ const Upload = ({ setResult, setLoading, setError }) => {
         onDragLeave={handleDragLeave}
         onClick={() => fileInputRef.current?.click()}
       >
-        <p>Glisse-dépose une image ici ou clique pour sélectionner.</p>
-        <small>JPG, PNG, WEBP</small>
+        <div className="upload-icon">🌿</div>
+        <p>Glisse-dépose une image ici<br/>ou clique pour sélectionner</p>
+        <small>JPG · PNG · WEBP — max 15 Mo</small>
       </div>
       <input
         ref={fileInputRef}

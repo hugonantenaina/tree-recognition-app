@@ -293,7 +293,8 @@ function App() {
 
               {!loading && !result && (
                 <div className="placeholder">
-                  <p>Choisis une photo pour identifier un arbre.</p>
+                  <div className="placeholder-icon">🌳</div>
+                  <p>Prenez ou importez une photo<br/>pour identifier un arbre</p>
                 </div>
               )}
             </section>
