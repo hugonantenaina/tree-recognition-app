@@ -1,0 +1,16 @@
+name: Keep Render Alive
+
+on:
+  schedule:
+    - cron: '*/14 * * * *'  # Isaky ny 14 minitra
+  workflow_dispatch:          # Azo atomboka manualy koa
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping ArbreScan API
+        run: |
+          echo "Pinging ArbreScan API..."
+          curl -s https://arbrescan-api.onrender.com/api/test
+          echo "Ping done!"
