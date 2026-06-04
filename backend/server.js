@@ -107,3 +107,13 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`✅ Server started on http://localhost:${PORT}`);
 });
+// Keep alive — mba tsy hatory ny Render free tier
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || 'https://arbrescan-api.onrender.com';
+setInterval(async () => {
+  try {
+    await axios.get(`${SELF_URL}/api/test`);
+    console.log('Keep alive ping sent');
+  } catch (err) {
+    console.warn('Keep alive failed:', err.message);
+  }
+}, 14 * 60 * 1000); // 14 minitra
