@@ -1,16 +1,19 @@
 import { useRef, useState } from 'react';
 
-const API_URL = process.env.REACT_APP_API_URL || '';
+const API_URL = 'https://arbrescan-api.onrender.com';
 
-const Upload = ({ setResult, setLoading, setError }) => {
+const Upload = ({ setResult, setLoading, setError, serverReady }) => {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
 
   const sendFile = async (file) => {
     setError('');
     setResult(null);
-    if (!file) {
-      setError('Aucun fichier sélectionné.');
+    if (!file) return;
+
+    // Raha tsy mbola ready ny server → mampiseho message
+    if (!serverReady) {
+      setError('Le serveur démarre, veuillez patienter quelques secondes...');
       return;
     }
 
@@ -24,42 +27,26 @@ const Upload = ({ setResult, setLoading, setError }) => {
       });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.message || 'Erreur lors de l’analyse.');
+        setError(data.message || 'Erreur lors de l\'analyse.');
       } else {
         setResult(data);
       }
-    } catch (err) {
-      setError('Impossible de contacter le serveur.');
+    } catch {
+      setError('Impossible de contacter le serveur. Réessayez dans quelques secondes.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileSelect = (event) => {
-    const file = event.target.files?.[0];
-    sendFile(file);
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    setDragActive(false);
-    const file = event.dataTransfer.files?.[0];
-    sendFile(file);
-  };
-
-  const handleDragOver = (event) => {
-    event.preventDefault();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragActive(false);
-  };
+  const handleFileSelect = (e) => sendFile(e.target.files?.[0]);
+  const handleDrop = (e) => { e.preventDefault(); setDragActive(false); sendFile(e.dataTransfer.files?.[0]); };
+  const handleDragOver = (e) => { e.preventDefault(); setDragActive(true); };
+  const handleDragLeave = () => setDragActive(false);
 
   return (
     <div>
       <div
-        className={dragActive ? 'upload-zone upload-zone--active' : 'upload-zone'}
+        className={`upload-zone${dragActive ? ' upload-zone--active' : ''}${!serverReady ? ' upload-zone--waiting' : ''}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

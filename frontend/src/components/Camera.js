@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
+
 const API_URL = 'https://arbrescan-api.onrender.com';
 
-const Camera = ({ setResult, setLoading, setError }) => {
+const Camera = ({ setResult, setLoading, setError, serverReady }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [streamActive, setStreamActive] = useState(false);
@@ -19,18 +20,16 @@ const Camera = ({ setResult, setLoading, setError }) => {
         videoRef.current.play();
       }
       setStreamActive(true);
-    } catch (err) {
-      setError('Impossible d’accéder à la caméra. Vérifie tes permissions.');
+    } catch {
+      setError('Impossible d\'accéder à la caméra. Vérifie tes permissions.');
     }
   };
 
   const stopCamera = () => {
     const stream = videoRef.current?.srcObject;
-    if (stream && stream.getTracks) {
+    if (stream?.getTracks) {
       stream.getTracks().forEach((track) => track.stop());
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
+      if (videoRef.current) videoRef.current.srcObject = null;
     }
     setStreamActive(false);
   };
@@ -38,6 +37,13 @@ const Camera = ({ setResult, setLoading, setError }) => {
   const capturePhoto = async () => {
     setError('');
     setResult(null);
+
+    // Raha tsy mbola ready ny server
+    if (!serverReady) {
+      setError('Le serveur démarre, veuillez patienter quelques secondes...');
+      return;
+    }
+
     if (!videoRef.current || !canvasRef.current) {
       setError('Aucune image à capturer.');
       return;
@@ -47,12 +53,11 @@ const Camera = ({ setResult, setLoading, setError }) => {
     const canvas = canvasRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
     canvas.toBlob(async (blob) => {
       if (!blob) {
-        setError('Échec de la capture de la photo.');
+        setError('Échec de la capture.');
         return;
       }
       const formData = new FormData();
@@ -65,12 +70,12 @@ const Camera = ({ setResult, setLoading, setError }) => {
         });
         const data = await response.json();
         if (!response.ok) {
-          setError(data.message || 'Erreur lors de l’analyse.');
+          setError(data.message || 'Erreur lors de l\'analyse.');
         } else {
           setResult(data);
         }
-      } catch (err) {
-        setError('Impossible de contacter le serveur.');
+      } catch {
+        setError('Impossible de contacter le serveur. Réessayez dans quelques secondes.');
       } finally {
         setLoading(false);
       }
@@ -86,13 +91,23 @@ const Camera = ({ setResult, setLoading, setError }) => {
 
       <div className="camera-actions">
         <button type="button" className="button" onClick={startCamera}>
-          Démarrer caméra
+          📷 Démarrer
         </button>
-        <button type="button" className="button button--primary" onClick={capturePhoto} disabled={!streamActive}>
-          Prendre photo
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={capturePhoto}
+          disabled={!streamActive}
+        >
+          📸 Capturer
         </button>
-        <button type="button" className="button" onClick={stopCamera} disabled={!streamActive}>
-          Arrêter
+        <button
+          type="button"
+          className="button"
+          onClick={stopCamera}
+          disabled={!streamActive}
+        >
+          ⏹ Arrêter
         </button>
       </div>
     </div>
