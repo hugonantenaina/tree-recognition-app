@@ -36,21 +36,10 @@ function App() {
   const [history, setHistory] = useState([]);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [serverReady, setServerReady] = useState(false);
 
-  // "Wake up" ny Render rehefa misokatra ny app
+  // Wake up ny Render amin'ny background (tsy mijanona ny app)
   useEffect(() => {
-    const wakeUp = async () => {
-      try {
-        const res = await fetch('https://arbrescan-api.onrender.com/api/test', {
-          signal: AbortSignal.timeout(60000),
-        });
-        if (res.ok) setServerReady(true);
-      } catch {
-        setServerReady(true); // manohy na dia tsy nifoha aza
-      }
-    };
-    wakeUp();
+    fetch('https://arbrescan-api.onrender.com/api/test').catch(() => {});
   }, []);
 
   // Mihaino ny fiovan'ny auth (miditra / mivoaka)

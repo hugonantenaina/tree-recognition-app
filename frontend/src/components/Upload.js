@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 
 const API_URL = 'https://arbrescan-api.onrender.com';
 
-const Upload = ({ setResult, setLoading, setError, serverReady }) => {
+const Upload = ({ setResult, setLoading, setError }) => {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -10,12 +10,6 @@ const Upload = ({ setResult, setLoading, setError, serverReady }) => {
     setError('');
     setResult(null);
     if (!file) return;
-
-    // Raha tsy mbola ready ny server → mampiseho message
-    if (!serverReady) {
-      setError('Le serveur démarre, veuillez patienter quelques secondes...');
-      return;
-    }
 
     const formData = new FormData();
     formData.append('image', file);
@@ -46,7 +40,7 @@ const Upload = ({ setResult, setLoading, setError, serverReady }) => {
   return (
     <div>
       <div
-        className={`upload-zone${dragActive ? ' upload-zone--active' : ''}${!serverReady ? ' upload-zone--waiting' : ''}`}
+        className={`upload-zone${dragActive ? ' upload-zone--active' : ''}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

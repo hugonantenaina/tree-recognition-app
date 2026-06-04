@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 
 const API_URL = 'https://arbrescan-api.onrender.com';
 
-const Camera = ({ setResult, setLoading, setError, serverReady }) => {
+const Camera = ({ setResult, setLoading, setError }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [streamActive, setStreamActive] = useState(false);
@@ -37,12 +37,6 @@ const Camera = ({ setResult, setLoading, setError, serverReady }) => {
   const capturePhoto = async () => {
     setError('');
     setResult(null);
-
-    // Raha tsy mbola ready ny server
-    if (!serverReady) {
-      setError('Le serveur démarre, veuillez patienter quelques secondes...');
-      return;
-    }
 
     if (!videoRef.current || !canvasRef.current) {
       setError('Aucune image à capturer.');
